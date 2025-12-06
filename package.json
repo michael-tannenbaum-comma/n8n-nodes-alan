@@ -1,0 +1,48 @@
+{
+  "name": "n8n-nodes-alan",
+  "version": "0.1.0",
+  "description": "n8n nodes for alan.de (Chats, Experts, Knowledge Databases)",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "alan",
+    "llm",
+    "ai",
+    "rag"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/michael-tannenbaum-comma/n8n-nodes-alan",
+  "author": {
+    "name": "Michael Tannenbaum",
+    "email": "michael.tannenbaum@comma-soft.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michael-tannenbaum-comma/n8n-nodes-alan.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && copyfiles nodes/**/*.svg dist",
+    "dev": "tsc --watch"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "nodes": [
+      "dist/nodes/Alan/Alan.node.js"
+    ],
+    "credentials": [
+      "dist/credentials/AlanApi.credentials.js"
+    ]
+  },
+  "devDependencies": {
+    "copyfiles": "^2.4.1",
+    "n8n-core": "*",
+    "n8n-workflow": "*",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "rootDirs": ["nodes", "credentials"],
+    "outDir": "dist",
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022", "dom"],
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "nodes/**/*",
+    "credentials/**/*"
+  ]
+}
