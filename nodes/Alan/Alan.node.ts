@@ -120,10 +120,14 @@ export class Alan implements INodeType {
 			{
 				displayName: 'Model',
 				name: 'model',
-				type: 'string',
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getModels',
+					creatable: true, // Allows manual input if model is missing in list
+				},
 				default: '',
-				placeholder: 'e.g. comma-soft/comma-llm-l',
 				displayOptions: { show: { resource: ['chat'], operation: ['create'] } },
+				description: 'Override the model. Leave empty to use Expert or Tenant default.',
 			},
 			{
 				displayName: 'Options',
@@ -211,9 +215,14 @@ export class Alan implements INodeType {
 			{
 				displayName: 'Model',
 				name: 'model',
-				type: 'string',
-				default: 'comma-soft/comma-llm-l',
+				type: 'options',
+				typeOptions: {
+					loadOptionsMethod: 'getModels',
+					creatable: true,
+				},
+				default: '', 
 				displayOptions: { show: { resource: ['expert'], operation: ['create'] } },
+				description: 'The LLM model to use for this expert',
 			},
 			{
 				displayName: 'Knowledge Bases',
@@ -468,6 +477,30 @@ export class Alan implements INodeType {
 				if (responseData.abilities) {
 					for (const ability of responseData.abilities) {
 						returnData.push({ name: ability.title, value: ability.resource_id });
+					}
+				}
+				return returnData;
+			},
+			async getModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+				const returnData: INodePropertyOptions[] = [];
+				
+				// Default Option
+				returnData.push({
+					name: '- Default (Use Expert/System Settings) -',
+					value: '',
+				});
+
+				const responseData = await this.helpers.requestWithAuthentication.call(this, 'alanApi', {
+					method: 'GET',
+					url: 'https://app.alan.de/api/v1/models/',
+					json: true,
+				});
+
+				if (responseData.models) {
+					for (const model of responseData.models) {
+						// name ist die ID (z.B. comma-soft/comma-llm)
+						// title ist der Anzeigename
+						returnData.push({ name: model.title, value: model.name });
 					}
 				}
 				return returnData;
