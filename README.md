@@ -1,6 +1,6 @@
 # n8n-nodes-alan
 
-This is a community node for [n8n](https://n8n.io/) to interact with [**Alan by Comma Soft**](alan.de).
+This is a community node for [n8n](https://n8n.io/) to interact with [**Alan by Comma Soft**](https://www.alan.de).
 
 It allows you to create chats, manage experts, upload files, and manage knowledge bases directly within your workflows.
 
