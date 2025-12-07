@@ -80,7 +80,7 @@ export class Alan implements INodeType {
 				typeOptions: { loadOptionsMethod: 'getExperts' },
 				default: '',
 				displayOptions: { show: { resource: ['chat'], operation: ['create'] } },
-				description: 'Choose an expert. Explicit parameters override expert settings.',
+				description: 'Choose an expert. If selected, expert settings (Prompt, Model, KBs) are loaded exclusively.',
 			},
 			{
 				displayName: 'Knowledge Bases',
@@ -88,8 +88,14 @@ export class Alan implements INodeType {
 				type: 'multiOptions',
 				typeOptions: { loadOptionsMethod: 'getKnowledgeBases' },
 				default: [],
-				displayOptions: { show: { resource: ['chat'], operation: ['create'] } },
-				description: 'Select knowledge bases to use for RAG',
+				displayOptions: { 
+					show: { 
+						resource: ['chat'], 
+						operation: ['create'],
+						expertId: [''] 
+					},
+				},
+				description: 'Select knowledge bases to use for RAG (Ignored if Expert is selected)',
 			},
 			{
 				displayName: 'Attached Files (IDs)',
@@ -106,8 +112,14 @@ export class Alan implements INodeType {
 				type: 'multiOptions',
 				typeOptions: { loadOptionsMethod: 'getSystemAbilities' },
 				default: [],
-				displayOptions: { show: { resource: ['chat'], operation: ['create'] } },
-				description: 'Capabilities the chat allows (e.g. web search)',
+				displayOptions: { 
+					show: { 
+						resource: ['chat'], 
+						operation: ['create'],
+						expertId: ['']
+					},
+				},
+				description: 'Abilities the chat allows (Ignored if Expert is selected)',
 			},
 			{
 				displayName: 'API Only (Hide Chat)',
@@ -483,8 +495,6 @@ export class Alan implements INodeType {
 			},
 			async getModels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 				const returnData: INodePropertyOptions[] = [];
-				
-				// Default Option
 				returnData.push({
 					name: '- Default (Use Expert/System Settings) -',
 					value: '',
@@ -498,8 +508,6 @@ export class Alan implements INodeType {
 
 				if (responseData.models) {
 					for (const model of responseData.models) {
-						// name ist die ID (z.B. comma-soft/comma-llm)
-						// title ist der Anzeigename
 						returnData.push({ name: model.title, value: model.name });
 					}
 				}
@@ -520,12 +528,14 @@ export class Alan implements INodeType {
 					// --- CHAT LOGIC ---
 					const content = this.getNodeParameter('content', i) as string;
 					const expertId = this.getNodeParameter('expertId', i) as string;
-					const knowledgeBaseIds = this.getNodeParameter('knowledgeBaseIds', i) as string[];
 					const attachedFilesInput = this.getNodeParameter('attachedFiles', i) as string;
-					const systemAbilities = this.getNodeParameter('systemAbilities', i) as string[];
-					const model = this.getNodeParameter('model', i) as string;
 					const apiOnly = this.getNodeParameter('apiOnly', i) as boolean;
 					const options = this.getNodeParameter('chatOptions', i) as IDataObject;
+					
+					let model = '';
+					try {
+						model = this.getNodeParameter('model', i) as string;
+					} catch(e) { /* ignore if hidden */ }
 
 					let attachedFiles: string[] = [];
 					if (attachedFilesInput) {
@@ -536,18 +546,27 @@ export class Alan implements INodeType {
 						content,
 						api_only: apiOnly,
 						attached_files: attachedFiles,
-						settings: {
-							knowledgebase_ids: knowledgeBaseIds || [],
-							abilities_system: systemAbilities || [],
-						},
 					};
 
-					if (expertId) body.expert_id = expertId;
-					
-					const settings = body.settings as IDataObject;
-					if (model) settings.model = model;
-					if (options.temperature) settings.temperature = options.temperature;
-					if (options.top_p) settings.top_p = options.top_p;
+					if (expertId) {
+						body.expert_id = expertId;
+						body.load_expert_instead_of_settings = true;
+						body.settings = {};
+					} else {
+						const knowledgeBaseIds = this.getNodeParameter('knowledgeBaseIds', i) as string[];
+						const systemAbilities = this.getNodeParameter('systemAbilities', i) as string[];
+
+						const settings: IDataObject = {
+							knowledgebase_ids: knowledgeBaseIds || [],
+							abilities_system: systemAbilities || [],
+						};
+						
+						if (model) settings.model = model;
+						if (options.temperature) settings.temperature = options.temperature;
+						if (options.top_p) settings.top_p = options.top_p;
+
+						body.settings = settings;
+					}
 
 					const response = await this.helpers.requestWithAuthentication.call(this, 'alanApi', {
 						method: 'POST',
